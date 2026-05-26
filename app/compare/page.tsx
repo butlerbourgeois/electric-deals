@@ -444,8 +444,9 @@ export default function ComparePage() {
 
             <p className="text-xs text-gray-400 text-center pt-2">
               Estimated costs based on {monthlyKwh?.toLocaleString()} kWh/month in the{' '}
-              {zipResult?.tdu.replace(/_/g, ' ')} service area. Actual bills may vary.{' '}
-              <a href="#" className="underline">See methodology</a>.
+              {zipResult?.tdu.replace(/_/g, ' ')} service area. Plan data from PowerToChoose.org.
+              Actual bills may vary.{' '}
+              <a href="/methodology" className="underline">See methodology</a>.
             </p>
           </div>
         )}
