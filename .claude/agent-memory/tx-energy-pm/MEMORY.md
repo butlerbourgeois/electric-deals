@@ -1,0 +1,7 @@
+- [Project North Star](project_north_star.md) — Greenfield TX electricity deal-finding SaaS; users input usage or upload bills, platform finds best-fit plans
+- [User Profile](user_role.md) — Founder/operator building greenfield, wants opinionated strategic guidance not hand-holding
+- [Core Differentiation Bet](project_moat_strategy.md) — Bill-upload + personalized usage analysis is the primary moat vs PowerToChoose's static table UX
+- [Monetization Model](project_monetization.md) — REP affiliate/lead-gen primary; B2B data and premium consumer tier secondary
+- [Compliance Watch List](project_compliance.md) — PUCT REP marketing rules + TCPA enrollment flows need legal review before launch
+- [MVP Constraints](project_mvp_constraints.md) — Aggregator-first monetization, manual usage entry, no REP contacts; 6-week ship target set 2026-05-26
+- [Week 1 Scope](project_week1_scope.md) — Locked 2026-05-26: scaffolding, schema, PTC ingestion, ZIP+usage form, calculator; quote ranking is Week 2
