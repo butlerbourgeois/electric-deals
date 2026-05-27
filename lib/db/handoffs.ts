@@ -1,15 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, formatSupabaseError } from '@/lib/supabase/admin'
 import { EnrollmentHandoff, EnrollmentHandoffInsert } from '@/types/database'
 
 /**
  * Records an outbound enrollment click for affiliate attribution.
  * The sub_id is the external identifier sent to the aggregator network
  * for commission reconciliation.
+ * Uses the service-role client — handoffs are server-initiated writes.
  */
 export async function recordHandoff(
   input: EnrollmentHandoffInsert
 ): Promise<EnrollmentHandoff> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('enrollment_handoff')
@@ -17,6 +18,6 @@ export async function recordHandoff(
     .select()
     .single()
 
-  if (error) throw new Error(`recordHandoff failed: ${error.message}`)
+  if (error) throw new Error(`recordHandoff failed: ${formatSupabaseError(error)}`)
   return data as EnrollmentHandoff
 }

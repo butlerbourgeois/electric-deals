@@ -1,13 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, formatSupabaseError } from '@/lib/supabase/admin'
 import { UsageProfile, UsageProfileInsert } from '@/types/database'
 
 /**
  * Inserts a new usage profile and returns the created row.
+ * Uses the service-role client so RLS and missing grants never block
+ * server-side writes from Route Handlers.
  */
 export async function createUsageProfile(
   input: UsageProfileInsert
 ): Promise<UsageProfile> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('usage_profile')
@@ -15,7 +18,7 @@ export async function createUsageProfile(
     .select()
     .single()
 
-  if (error) throw new Error(`createUsageProfile failed: ${error.message}`)
+  if (error) throw new Error(`createUsageProfile failed: ${formatSupabaseError(error)}`)
   return data as UsageProfile
 }
 
