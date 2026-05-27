@@ -5,6 +5,7 @@ import { insertQuotes } from '@/lib/db/quotes'
 import { getOrCreateSessionId } from '@/lib/session'
 import { calculateMonthlyCost } from '@/lib/calculator'
 import { rankReason } from '@/lib/calculator/rank-reason'
+import { extractUsageSpecificGotchas, PlanForGotchas } from '@/lib/calculator/gotchas'
 import { TduTerritory, QuoteInsert } from '@/types/database'
 
 const MAX_RESULTS = 25
@@ -105,6 +106,10 @@ export async function POST(req: NextRequest) {
         cancellationFee: ranked[i].plan.cancellation_fee,
         eflUrl: ranked[i].plan.efl_url,
         enrollmentUrl: ranked[i].plan.enrollment_url,
+        gotchas: [
+          ...(ranked[i].plan.gotchas ?? []),
+          ...extractUsageSpecificGotchas(ranked[i].plan as PlanForGotchas, kwh),
+        ],
         provider: {
           name: ranked[i].plan.provider?.name ?? 'Unknown',
           logoUrl: ranked[i].plan.provider?.logo_url ?? null,

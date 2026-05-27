@@ -6,6 +6,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js'
+import { Gotcha, ProjectedCosts } from '@/types/database'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,8 @@ export interface PlanRecord {
   tos_url: string | null
   yrac_url: string | null
   enrollment_url: string | null
+  gotchas: Gotcha[]
+  projected_costs: ProjectedCosts | null
   is_active: boolean
 }
 

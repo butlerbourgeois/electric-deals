@@ -59,6 +59,9 @@ import { config as loadEnv } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { upsertPlansForTdu, deactivateStalePlans, PlanEntry, PlanRecord } from '../lib/ingest/upsert'
 import { planTypeFromCpProduct, parseCancellationFee, parseRenewablePercent, cleanUrl } from '../lib/ingest/normalize'
+import { extractGotchas } from '../lib/calculator/gotchas'
+import { calculateMonthlyCost } from '../lib/calculator'
+import { ProjectedCosts } from '../types/database'
 
 // Load .env.local (Next.js convention for local secrets — not committed to git)
 loadEnv({ path: '.env.local' })
@@ -342,12 +345,41 @@ function normalizeCpPlan(raw: CpPlan, tdu: string): PlanRecord {
     family:         product.family,
   })
 
+  // Build a planCore that satisfies PlanForGotchas (PlanRateInputs + plan_type).
+  // All PlanRateInputs fields come from the rates/comps already extracted above.
+  const planCore = {
+    plan_type:              planType,
+    base_monthly_charge:    comps.base_monthly_charge,
+    energy_charge_per_kwh:  comps.energy_charge_per_kwh,
+    tdu_charges_per_kwh:    comps.tdu_charges_per_kwh,
+    tdu_monthly_charge:     comps.tdu_monthly_charge,
+    bill_credit_amount:     comps.bill_credit_amount,
+    bill_credit_threshold:  comps.bill_credit_threshold,
+    rate_500_kwh:           rates.rate_500_kwh,
+    rate_1000_kwh:          rates.rate_1000_kwh,
+    rate_2000_kwh:          rates.rate_2000_kwh,
+    cancellation_fee:       parseCancellationFee(product.early_termination_fee),
+    term_months:            product.term ?? 12,
+  }
+
+  const gotchas = extractGotchas(planCore)
+
+  const makePoint = (kwh: number) => {
+    const r = calculateMonthlyCost(planCore, kwh)
+    return { monthly: r.estimatedMonthlyBill, annual: r.estimatedAnnualCost, method: r.calculationMethod }
+  }
+  const projected_costs: ProjectedCosts = {
+    at_500:  makePoint(500),
+    at_1000: makePoint(1000),
+    at_2000: makePoint(2000),
+  }
+
   return {
     external_id:            raw._id,
     source:                 SOURCE,
     name:                   (product.display_name ?? product.name)?.trim() ?? 'Unknown Plan',
     plan_type:              planType,
-    term_months:            product.term ?? 12,
+    term_months:            planCore.term_months,
     tdu_territory:          tdu,
     rate_500_kwh:           rates.rate_500_kwh,
     rate_1000_kwh:          rates.rate_1000_kwh,
@@ -359,11 +391,13 @@ function normalizeCpPlan(raw: CpPlan, tdu: string): PlanRecord {
     bill_credit_amount:     comps.bill_credit_amount,
     bill_credit_threshold:  comps.bill_credit_threshold,
     renewable_percent:      parseRenewablePercent(product.percent_green),
-    cancellation_fee:       parseCancellationFee(product.early_termination_fee),
+    cancellation_fee:       planCore.cancellation_fee,
     efl_url:                docs.efl_url,
     tos_url:                docs.tos_url,
     yrac_url:               docs.yrac_url,
     enrollment_url:         docs.enrollment_url,
+    gotchas,
+    projected_costs,
     is_active:              true,
   }
 }
@@ -409,6 +443,8 @@ function generateMockPlans(tdu: string): PlanEntry[] {
           tos_url:                null,
           yrac_url:               null,
           enrollment_url:         null,
+          gotchas:                [],
+          projected_costs:        null,
           is_active:              true,
         },
       }

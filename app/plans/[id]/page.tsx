@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPlanById } from '@/lib/db/plans'
 import { BackButton } from './back-button'
+import { GotchaBadge } from '@/components/ui/gotcha-badge'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -39,6 +40,8 @@ export default async function PlanDetailPage({ params }: Props) {
   const rate1000 = plan.rate_1000_kwh?.toFixed(2) ?? '—'
   const rate500 = plan.rate_500_kwh?.toFixed(2) ?? '—'
   const rate2000 = plan.rate_2000_kwh?.toFixed(2) ?? '—'
+  // Fallback for rows that predate migration 000011 where gotchas column may be absent
+  const gotchas = plan.gotchas ?? []
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -136,6 +139,29 @@ export default async function PlanDetailPage({ params }: Props) {
             </div>
           </dl>
         </div>
+
+        {/* What to watch out for */}
+        {gotchas.length > 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-4">
+            <h2 className="font-semibold text-gray-900 mb-4">What to watch out for</h2>
+            <div className="space-y-3">
+              {gotchas.map((gotcha, i) => (
+                <GotchaBadge key={`${gotcha.code}-${i}`} gotcha={gotcha} compact={false} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4 flex items-start gap-3">
+            <span className="text-green-600 text-xl mt-0.5">✓</span>
+            <div>
+              <p className="font-semibold text-green-800">Clean plan — no warnings detected</p>
+              <p className="text-sm text-green-700 mt-1">
+                We checked this plan for common gotchas: bill-credit cliffs, hidden base charges,
+                rate spikes at low usage, and high cancellation fees. None found.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Documents */}
         {(plan.efl_url || plan.tos_url || plan.yrac_url) && (

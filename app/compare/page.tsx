@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { estimateKwhFromBill } from '@/lib/calculator'
 import { lookupZipStatic, ZipLookupResult } from '@/lib/supabase/zip-lookup'
+import { Gotcha } from '@/types/database'
+import { GotchaBadge } from '@/components/ui/gotcha-badge'
+import { CleanPlanBadge } from '@/components/ui/clean-plan-badge'
 
 type UsageMethod = 'kwh' | 'bill'
 type HomeType = 'apartment' | 'small_home' | 'large_home'
@@ -23,6 +26,7 @@ interface QuoteResult {
     cancellationFee: number
     eflUrl: string | null
     enrollmentUrl: string | null
+    gotchas: Gotcha[]
     provider: { name: string; logoUrl: string | null }
   }
 }
@@ -412,6 +416,24 @@ export default function ComparePage() {
                     <span className="bg-gray-100 px-2 py-1 rounded">
                       ${quote.plan.cancellationFee} ETF
                     </span>
+                  )}
+                </div>
+
+                {/* Gotcha warnings — show on all cards including rank-1 */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {quote.plan.gotchas.length === 0 ? (
+                    <CleanPlanBadge />
+                  ) : (
+                    <>
+                      {quote.plan.gotchas.slice(0, 3).map((gotcha, gi) => (
+                        <GotchaBadge key={`${gotcha.code}-${gi}`} gotcha={gotcha} compact />
+                      ))}
+                      {quote.plan.gotchas.length > 3 && (
+                        <span className="inline-flex items-center text-xs text-gray-400 px-2 py-1">
+                          +{quote.plan.gotchas.length - 3} more
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 

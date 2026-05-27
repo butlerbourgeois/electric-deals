@@ -6,3 +6,7 @@
 - [MVP Constraints](project_mvp_constraints.md) — Aggregator-first monetization, manual usage entry, no REP contacts; 6-week ship target set 2026-05-26
 - [Week 1 Scope](project_week1_scope.md) — Locked 2026-05-26: scaffolding, schema, PTC ingestion, ZIP+usage form, calculator; quote ranking is Week 2
 - [Week 2 Scope](project_week2_scope.md) — Locked 2026-05-27: live DB-backed compare, quote+handoff persistence, plan detail pages, ComparePower-API ingestion
+- [Competitive Positioning](project_competitive_positioning.md) — Sell "never overpay again" (recurring/personal/trust) vs ComparePower's one-shot comparison; four-layer moat combination
+- [Differentiation Roadmap](project_differentiation_roadmap.md) — Post-MVP 12-week sequence: true-cost calc → renewal alerts → bill upload → trust scores+SEO → Spanish
+- [Monetization Nuances](project_monetization_nuances.md) — EPC-lift tactics: direct REP deals at 50/mo, commission as tie-breaker, dropped-enrollment recovery, B2B data over premium tier
+- [Weeks 3-4 Scope](project_weeks_3_4_scope.md) — Locked 2026-05-27: true-cost ranking audit, bill-credit cliff modeling, Gotcha badges, EFL gotcha extraction from component data

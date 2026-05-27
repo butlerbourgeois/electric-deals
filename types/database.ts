@@ -1,6 +1,38 @@
 export type TduTerritory = 'oncor' | 'centerpoint' | 'aep_central' | 'aep_north' | 'tnmp' | 'NON_DEREGULATED'
 export type PlanType = 'fixed' | 'variable' | 'indexed' | 'tou'
 
+// ─── Gotcha types ─────────────────────────────────────────────────────────────
+
+export type GotchaCode =
+  | 'bill_credit_cliff'        // large bill swing when usage dips below credit threshold
+  | 'rate_doubles_low_usage'   // rate_500 is 1.5x+ higher than rate_1000
+  | 'high_base_charge'         // base monthly charge >= $9.95
+  | 'high_etf'                 // early termination fee >= $250 on a 12+ month contract
+  | 'teaser_rate_short_term'   // variable plan with <= 3-month term (intro-rate pattern)
+  | 'tdu_charge_buried_in_rate'// no per-kWh component breakdown available
+  | 'usage_near_cliff'         // computed at compare-time: user's kWh is within 100 of credit threshold
+
+export interface Gotcha {
+  code: GotchaCode
+  severity: 'high' | 'medium' | 'low'
+  title: string
+  detail: string
+  threshold_kwh?: number   // relevant for cliff/near-cliff gotchas
+  swing_dollars?: number   // dollar impact for cliff gotchas
+}
+
+export interface ProjectedCostPoint {
+  monthly: number
+  annual: number
+  method: 'components' | 'interpolated' | 'anchor'
+}
+
+export interface ProjectedCosts {
+  at_500:  ProjectedCostPoint
+  at_1000: ProjectedCostPoint
+  at_2000: ProjectedCostPoint
+}
+
 export interface Provider {
   id: string
   name: string
@@ -36,6 +68,8 @@ export interface Plan {
   tos_url: string | null
   yrac_url: string | null
   enrollment_url: string | null
+  gotchas: Gotcha[]
+  projected_costs: ProjectedCosts | null
   is_active: boolean
   last_seen_at: string
   created_at: string
