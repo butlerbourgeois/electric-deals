@@ -92,3 +92,11 @@ export interface EnrollmentHandoff {
   commission_amount: number | null
   reconciled_at: string | null
 }
+
+// Joined types
+export type PlanWithProvider = Plan & { provider: Provider }
+
+// Insert shapes (omit DB-generated fields)
+export type QuoteInsert = Omit<Quote, 'id' | 'computed_at' | 'plan'>
+export type UsageProfileInsert = Omit<UsageProfile, 'id' | 'created_at' | 'updated_at'>
+export type EnrollmentHandoffInsert = Omit<EnrollmentHandoff, 'id'>

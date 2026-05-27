@@ -5,3 +5,4 @@
 - [Compliance Watch List](project_compliance.md) — PUCT REP marketing rules + TCPA enrollment flows need legal review before launch
 - [MVP Constraints](project_mvp_constraints.md) — Aggregator-first monetization, manual usage entry, no REP contacts; 6-week ship target set 2026-05-26
 - [Week 1 Scope](project_week1_scope.md) — Locked 2026-05-26: scaffolding, schema, PTC ingestion, ZIP+usage form, calculator; quote ranking is Week 2
+- [Week 2 Scope](project_week2_scope.md) — Locked 2026-05-27: live DB-backed compare, quote+handoff persistence, plan detail pages, ComparePower-API ingestion
