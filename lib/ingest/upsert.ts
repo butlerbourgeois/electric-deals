@@ -30,6 +30,7 @@ export interface PlanRecord {
   efl_url: string | null
   tos_url: string | null
   yrac_url: string | null
+  enrollment_url: string | null
   is_active: boolean
 }
 

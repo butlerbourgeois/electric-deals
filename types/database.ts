@@ -35,6 +35,7 @@ export interface Plan {
   efl_url: string | null
   tos_url: string | null
   yrac_url: string | null
+  enrollment_url: string | null
   is_active: boolean
   last_seen_at: string
   created_at: string

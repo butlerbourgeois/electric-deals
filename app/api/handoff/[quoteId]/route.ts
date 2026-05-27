@@ -24,8 +24,8 @@ export async function GET(
     // Week 3+: branch on plan.source or aggregator partner ID
     const aggregator = 'powertochoose'
 
-    // Build handoff URL — append affiliate tracking params
-    const baseUrl = plan.efl_url ?? `https://www.powertochoose.org`
+    // Build handoff URL — prefer enrollment_url (signup page) over efl_url (regulatory PDF)
+    const baseUrl = plan.enrollment_url ?? plan.efl_url ?? `https://www.powertochoose.org`
     let handoffUrl: string
     try {
       const url = new URL(baseUrl)

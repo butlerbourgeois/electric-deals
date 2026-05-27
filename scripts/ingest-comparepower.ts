@@ -187,19 +187,43 @@ async function fetchCpPlans(tdu: string, duns: string): Promise<CpPlan[]> {
 
 /**
  * Extracts pricing data from the `expected_prices` array.
- * Prices from the API are already in $/kWh (e.g. 0.159 = 15.9 cents/kWh).
- * We store them as-is ($/kWh) matching the plan table schema.
+ *
+ * ComparePower returns prices in $/kWh (e.g. 0.159 = 15.9¢/kWh).
+ * The plan table schema and calculator both expect CENTS/kWh, so we
+ * multiply by 100 here. Treating 0 as null avoids $0 display for
+ * TOU plans (like "Twelve Hour Power") whose expected_prices are 0.
+ *
+ * @param prices          - raw expected_prices from the API
+ * @param fallbackCents   - average_cents_per_kWh from the plan root,
+ *                          used when all three anchor tiers are missing/0
  */
-function extractRates(prices: CpExpectedPrice[]): {
+function extractRates(
+  prices: CpExpectedPrice[],
+  fallbackCents?: number | null,
+): {
   rate_500_kwh:  number | null
   rate_1000_kwh: number | null
   rate_2000_kwh: number | null
 } {
   const byUsage = new Map(prices.map(p => [p.usage, p.price]))
+
+  // $/kWh → cents/kWh, treating 0 as null (no real plan costs 0¢/kWh)
+  const toCents = (v: number | undefined): number | null =>
+    v != null && v > 0 ? Math.round(v * 10000) / 100 : null
+
+  const r500  = toCents(byUsage.get(500))
+  const r1000 = toCents(byUsage.get(1000))
+  const r2000 = toCents(byUsage.get(2000))
+
+  // If all three tiers are missing/0 (common on TOU plans), use the
+  // plan-level average as a single anchor across all three tiers so the
+  // calculator always has something to work with.
+  const fb = fallbackCents && fallbackCents > 0 ? fallbackCents : null
+
   return {
-    rate_500_kwh:  byUsage.get(500)  ?? null,
-    rate_1000_kwh: byUsage.get(1000) ?? null,
-    rate_2000_kwh: byUsage.get(2000) ?? null,
+    rate_500_kwh:  r500  ?? fb,
+    rate_1000_kwh: r1000 ?? fb,
+    rate_2000_kwh: r2000 ?? fb,
   }
 }
 
@@ -264,14 +288,22 @@ function extractComponents(components: CpComponent[]): {
 }
 
 /**
- * Extracts EFL/TOS/YRAC document URLs from the document_links array.
+ * Extracts EFL/TOS/YRAC/enrollment document URLs from the document_links array.
  * ComparePower provides both a live vendor URL and a snapshot PDF URL.
  * We prefer the live vendor URL (more likely to be current).
+ *
+ * enrollment_url is the page where customers actually sign up — not the EFL PDF.
+ * If no enrollment link is found in document_links, we construct ComparePower's
+ * own order page URL from the plan ID as a reliable fallback.
  */
-function extractDocUrls(links: CpDocumentLink[]): {
-  efl_url:  string | null
-  tos_url:  string | null
-  yrac_url: string | null
+function extractDocUrls(
+  links: CpDocumentLink[],
+  planId: string,
+): {
+  efl_url:        string | null
+  tos_url:        string | null
+  yrac_url:       string | null
+  enrollment_url: string | null
 } {
   const find = (typeFragments: string[]) => {
     const match = links.find(l =>
@@ -280,10 +312,17 @@ function extractDocUrls(links: CpDocumentLink[]): {
     return cleanUrl(match?.link ?? match?.snapshot_url ?? null)
   }
 
+  // Try common enrollment link type names from ComparePower
+  const enrollFromLinks = find(['order', 'enroll', 'signup', 'sign_up', 'purchase', 'buy'])
+
+  // Fallback: ComparePower's own order flow URL (reliably routes to REP enrollment)
+  const enrollFallback = `https://plans.comparepower.com/order/${planId}`
+
   return {
-    efl_url:  find(['efl']),
-    tos_url:  find(['tos']),
-    yrac_url: find(['yraac', 'yrac']),
+    efl_url:        find(['efl']),
+    tos_url:        find(['tos']),
+    yrac_url:       find(['yraac', 'yrac']),
+    enrollment_url: enrollFromLinks ?? enrollFallback,
   }
 }
 
@@ -293,9 +332,9 @@ function extractDocUrls(links: CpDocumentLink[]): {
 function normalizeCpPlan(raw: CpPlan, tdu: string): PlanRecord {
   const product = raw.product
 
-  const rates    = extractRates(raw.expected_prices ?? [])
+  const rates    = extractRates(raw.expected_prices ?? [], raw.average_cents_per_kWh)
   const comps    = extractComponents(raw.components ?? [])
-  const docs     = extractDocUrls(raw.document_links ?? [])
+  const docs     = extractDocUrls(raw.document_links ?? [], raw._id)
   const planType = planTypeFromCpProduct({
     is_time_of_use: product.is_time_of_use,
     term:           product.term,
@@ -324,6 +363,7 @@ function normalizeCpPlan(raw: CpPlan, tdu: string): PlanRecord {
     efl_url:                docs.efl_url,
     tos_url:                docs.tos_url,
     yrac_url:               docs.yrac_url,
+    enrollment_url:         docs.enrollment_url,
     is_active:              true,
   }
 }
@@ -354,9 +394,9 @@ function generateMockPlans(tdu: string): PlanEntry[] {
           plan_type:              planType,
           term_months:            term,
           tdu_territory:          tdu,
-          rate_500_kwh:           parseFloat(((baseRate + 2) / 100).toFixed(5)),
-          rate_1000_kwh:          parseFloat((baseRate / 100).toFixed(5)),
-          rate_2000_kwh:          parseFloat(((baseRate - 0.5) / 100).toFixed(5)),
+          rate_500_kwh:           parseFloat((baseRate + 2).toFixed(2)),   // cents/kWh
+          rate_1000_kwh:          parseFloat(baseRate.toFixed(2)),           // cents/kWh
+          rate_2000_kwh:          parseFloat((baseRate - 0.5).toFixed(2)),   // cents/kWh
           base_monthly_charge:    (pi + i) % 2 === 0 ? 4.95 : 9.95,
           energy_charge_per_kwh:  null,
           tdu_charges_per_kwh:    null,
@@ -368,6 +408,7 @@ function generateMockPlans(tdu: string): PlanEntry[] {
           efl_url:                'https://www.powertochoose.org',
           tos_url:                null,
           yrac_url:               null,
+          enrollment_url:         null,
           is_active:              true,
         },
       }

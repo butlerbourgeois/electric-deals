@@ -22,6 +22,7 @@ interface QuoteResult {
     renewablePercent: number
     cancellationFee: number
     eflUrl: string | null
+    enrollmentUrl: string | null
     provider: { name: string; logoUrl: string | null }
   }
 }
@@ -423,14 +424,12 @@ export default function ComparePage() {
                   >
                     View Plan &amp; Enroll &#8594;
                   </a>
-                  {quote.plan.eflUrl && (
-                    <a
-                      href={`/plans/${quote.plan.id}`}
-                      className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:border-gray-300 transition-colors"
-                    >
-                      Details
-                    </a>
-                  )}
+                  <a
+                    href={`/plans/${quote.plan.id}`}
+                    className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:border-gray-300 transition-colors"
+                  >
+                    Details
+                  </a>
                 </div>
               </div>
             ))}

@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         renewablePercent: ranked[i].plan.renewable_percent,
         cancellationFee: ranked[i].plan.cancellation_fee,
         eflUrl: ranked[i].plan.efl_url,
+        enrollmentUrl: ranked[i].plan.enrollment_url,
         provider: {
           name: ranked[i].plan.provider?.name ?? 'Unknown',
           logoUrl: ranked[i].plan.provider?.logo_url ?? null,

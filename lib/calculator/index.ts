@@ -177,12 +177,13 @@ function calculateFromNearestAnchor(
   plan: PlanRateInputs,
   kwh: number
 ): CostResult {
-  // Use whichever anchor point we have
+  // Use whichever anchor point we have — guard against stored-zero rates
+  const nonZero = (v: number | null): number | null => (v != null && v > 0 ? v : null)
   const rate =
-    plan.rate_1000_kwh ??
-    plan.rate_500_kwh ??
-    plan.rate_2000_kwh ??
-    0.12 * 100 // absolute fallback: 12 cents/kWh
+    nonZero(plan.rate_1000_kwh) ??
+    nonZero(plan.rate_500_kwh) ??
+    nonZero(plan.rate_2000_kwh) ??
+    12 // absolute fallback: 12 cents/kWh
 
   const total = (rate * kwh) / 100
   const effectiveRatePerKwh = rate

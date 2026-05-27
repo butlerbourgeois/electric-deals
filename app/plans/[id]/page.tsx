@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPlanById } from '@/lib/db/plans'
+import { BackButton } from './back-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -42,10 +43,8 @@ export default async function PlanDetailPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        {/* Back link */}
-        <Link href="/compare" className="text-sm text-blue-600 hover:underline mb-6 block">
-          ← Compare all plans
-        </Link>
+        {/* Back button — uses router.back() to preserve compare page state */}
+        <BackButton />
 
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-4">
