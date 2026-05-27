@@ -1,2 +1,3 @@
 - [Project Scaffold](project_scaffold.md) — architecture, key paths, toolchain, Supabase status, manual steps remaining
 - [CMD Execution Pattern](feedback_cmd_execution.md) — always use cmd.exe for npm/npx/node; WSL has no Linux node binary
+- [ComparePower API](project_comparepower_api.md) — live endpoint, data shape, field mapping, component breakdown logic

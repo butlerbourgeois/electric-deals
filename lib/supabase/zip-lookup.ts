@@ -41,3 +41,4 @@ export function lookupZipStatic(zip: string): ZipLookupResult | null {
     isDeregulated: entry.tdu !== 'NON_DEREGULATED',
   }
 }
+
