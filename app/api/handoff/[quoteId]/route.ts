@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getQuoteWithPlan } from '@/lib/db/quotes'
 import { recordHandoff } from '@/lib/db/handoffs'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(
   req: NextRequest,
@@ -40,7 +41,7 @@ export async function GET(
     }
 
     // Record the handoff for attribution
-    await recordHandoff({
+    const handoff = await recordHandoff({
       quote_id: quoteId,
       usage_profile_id: quoteWithPlan.usage_profile_id,
       plan_id: plan.id,
@@ -51,7 +52,25 @@ export async function GET(
       reconciled_status: null,
       commission_amount: null,
       reconciled_at: null,
+      email_captured: false,
+      renewal_alert_id: null,
     })
+
+    // If a renewal alert ID was passed back from the capture modal, link it to
+    // this handoff row. This is fully optional — missing or invalid ?ra= is silently ignored.
+    const renewalAlertId = req.nextUrl.searchParams.get('ra')
+    if (renewalAlertId && handoff.id) {
+      try {
+        const supabase = createAdminClient()
+        await supabase
+          .from('enrollment_handoff')
+          .update({ email_captured: true, renewal_alert_id: renewalAlertId })
+          .eq('id', handoff.id)
+      } catch (raErr) {
+        // Non-fatal — the redirect must still fire regardless
+        console.warn('[/api/handoff] Could not link renewal_alert_id:', raErr)
+      }
+    }
 
     return NextResponse.redirect(handoffUrl, { status: 302 })
   } catch (err) {

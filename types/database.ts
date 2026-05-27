@@ -126,12 +126,48 @@ export interface EnrollmentHandoff {
   reconciled_status: 'enrolled' | 'rejected' | 'pending' | null
   commission_amount: number | null
   reconciled_at: string | null
+  // Renewal alert capture (added migration 000014)
+  email_captured: boolean
+  renewal_alert_id: string | null
+}
+
+// ─── Renewal alert types ──────────────────────────────────────────────────────
+
+export type RenewalAlertStatus = 'active' | 'unsubscribed' | 'bounced' | 'completed'
+export type EmailSendMilestone = 'welcome' | 'd45' | 'd30' | 'd15'
+export type EmailSendStatus = 'pending' | 'sent' | 'failed' | 'bounced' | 'opened' | 'clicked'
+
+export interface RenewalAlert {
+  id: string
+  email: string
+  plan_id: string
+  plan?: Plan
+  usage_profile_id: string | null
+  tdu_territory: TduTerritory
+  monthly_kwh: number
+  contract_end_date: string   // ISO date string YYYY-MM-DD
+  term_months: number
+  unsubscribe_token: string
+  status: RenewalAlertStatus
+  created_at: string
+}
+
+export interface EmailSend {
+  id: string
+  renewal_alert_id: string
+  milestone: EmailSendMilestone
+  sent_at: string | null
+  resend_message_id: string | null
+  status: EmailSendStatus
 }
 
 // Joined types
 export type PlanWithProvider = Plan & { provider: Provider }
+export type RenewalAlertWithPlan = RenewalAlert & { plan: PlanWithProvider }
 
 // Insert shapes (omit DB-generated fields)
 export type QuoteInsert = Omit<Quote, 'id' | 'computed_at' | 'plan'>
 export type UsageProfileInsert = Omit<UsageProfile, 'id' | 'created_at' | 'updated_at'>
 export type EnrollmentHandoffInsert = Omit<EnrollmentHandoff, 'id'>
+export type RenewalAlertInsert = Omit<RenewalAlert, 'id' | 'unsubscribe_token' | 'status' | 'created_at' | 'plan'>
+export type EmailSendInsert = Omit<EmailSend, 'id'>

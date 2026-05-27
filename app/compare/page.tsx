@@ -6,6 +6,7 @@ import { lookupZipStatic, ZipLookupResult } from '@/lib/supabase/zip-lookup'
 import { Gotcha } from '@/types/database'
 import { GotchaBadge } from '@/components/ui/gotcha-badge'
 import { CleanPlanBadge } from '@/components/ui/clean-plan-badge'
+import { HandoffModal } from '@/components/handoff/HandoffModal'
 
 type UsageMethod = 'kwh' | 'bill'
 type HomeType = 'apartment' | 'small_home' | 'large_home'
@@ -50,6 +51,7 @@ export default function ComparePage() {
   const [monthlyKwh, setMonthlyKwh] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState('')
+  const [modalQuote, setModalQuote] = useState<QuoteResult | null>(null)
 
   function handleZipSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -438,14 +440,12 @@ export default function ComparePage() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <a
-                    href={`/api/handoff/${quote.quoteId}`}
-                    target="_blank"
-                    rel="sponsored noopener nofollow"
+                  <button
+                    onClick={() => setModalQuote(quote)}
                     className="flex-1 text-center py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     View Plan &amp; Enroll &#8594;
-                  </a>
+                  </button>
                   <a
                     href={`/plans/${quote.plan.id}`}
                     className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:border-gray-300 transition-colors"
@@ -464,6 +464,18 @@ export default function ComparePage() {
                 <a href="/methodology" className="underline">See methodology</a>.
                 {' '}<em>Affiliate disclosure: we may earn a commission if you enroll.</em>
               </p>
+            )}
+
+            {/* Enrollment capture modal — rendered once, outside the plan card loop */}
+            {modalQuote && (
+              <HandoffModal
+                quoteId={modalQuote.quoteId}
+                planName={modalQuote.plan.name}
+                providerName={modalQuote.plan.provider.name}
+                termMonths={modalQuote.plan.termMonths}
+                isOpen={true}
+                onClose={() => setModalQuote(null)}
+              />
             )}
           </div>
         )}

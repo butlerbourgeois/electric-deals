@@ -10,3 +10,4 @@
 - [Differentiation Roadmap](project_differentiation_roadmap.md) — Post-MVP 12-week sequence: true-cost calc → renewal alerts → bill upload → trust scores+SEO → Spanish
 - [Monetization Nuances](project_monetization_nuances.md) — EPC-lift tactics: direct REP deals at 50/mo, commission as tie-breaker, dropped-enrollment recovery, B2B data over premium tier
 - [Weeks 3-4 Scope](project_weeks_3_4_scope.md) — Locked 2026-05-27: true-cost ranking audit, bill-credit cliff modeling, Gotcha badges, EFL gotcha extraction from component data
+- [Weeks 5-6 Scope](project_weeks_5_6_scope.md) — Locked 2026-05-27: renewal alert capture at handoff + Resend email pipeline (welcome + d45/d30/d15 cron)
