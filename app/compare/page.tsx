@@ -1,12 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { estimateKwhFromBill } from '@/lib/calculator'
 import { lookupZipStatic, ZipLookupResult } from '@/lib/supabase/zip-lookup'
 import { Gotcha } from '@/types/database'
 import { GotchaBadge } from '@/components/ui/gotcha-badge'
 import { CleanPlanBadge } from '@/components/ui/clean-plan-badge'
 import { HandoffModal } from '@/components/handoff/HandoffModal'
+
+const CACHE_KEY = 'electric_compare_cache'
+
+interface CompareCache {
+  zipResult: ZipLookupResult
+  monthlyKwh: number
+  quotes: QuoteResult[]
+}
 
 type UsageMethod = 'kwh' | 'bill'
 type HomeType = 'apartment' | 'small_home' | 'large_home'
@@ -53,6 +62,38 @@ export default function ComparePage() {
   const [apiError, setApiError] = useState('')
   const [modalQuote, setModalQuote] = useState<QuoteResult | null>(null)
 
+  // ── Session cache: restore results when user returns from plan detail ─────────
+  // Saved to sessionStorage so navigating to /plans/[id] and back restores results
+  // without forcing a repeat search. Cleared when the user starts a new ZIP search.
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY)
+      if (!raw) return
+      const cache: CompareCache = JSON.parse(raw)
+      if (cache.zipResult && cache.monthlyKwh && cache.quotes?.length > 0) {
+        setZipResult(cache.zipResult)
+        setZip(cache.zipResult.zip)
+        setMonthlyKwh(cache.monthlyKwh)
+        setQuotes(cache.quotes)
+        setStep(3)
+      }
+    } catch {
+      // Ignore malformed cache
+    }
+  }, [])
+
+  useEffect(() => {
+    if (step === 3 && quotes.length > 0 && zipResult && monthlyKwh) {
+      try {
+        const cache: CompareCache = { zipResult, monthlyKwh, quotes }
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache))
+      } catch {
+        // sessionStorage may be unavailable in some contexts — safe to ignore
+      }
+    }
+  }, [step, quotes, zipResult, monthlyKwh])
+
   function handleZipSubmit(e: React.FormEvent) {
     e.preventDefault()
     setZipError('')
@@ -66,6 +107,8 @@ export default function ComparePage() {
       setZipError("We don't have data for that ZIP yet. Try 77002 (Houston) or 75201 (Dallas).")
       return
     }
+    // New search — clear any cached results so old quotes don't flash on return
+    try { sessionStorage.removeItem(CACHE_KEY) } catch { /* ignore */ }
     setZipResult(result)
     setStep(2)
   }
@@ -446,12 +489,12 @@ export default function ComparePage() {
                   >
                     View Plan &amp; Enroll &#8594;
                   </button>
-                  <a
+                  <Link
                     href={`/plans/${quote.plan.id}`}
                     className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:border-gray-300 transition-colors"
                   >
                     Details
-                  </a>
+                  </Link>
                 </div>
               </div>
             ))}
